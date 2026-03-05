@@ -360,152 +360,152 @@ try:
 
        col_left, col_right = st.columns(2)
 
-	# ======================
-	# 左欄：修改前文章
-	# ======================
-	with col_left:
-	
-	st.markdown("### 修改前文章")
-	
-	st.markdown(f"**標題：** {article.get('before_title','')}")
-	
-	st.text_area(
-	"內容（修改前）",
-	value=article.get("before_content", ""),
-	height=280,
-	disabled=True,
-	key=f"before_content_{article_id}_{reviewer_id}"
-	)
-	
-	st.markdown("#### 評分")
-	
-	b1, b2, b3 = st.columns(3)
-	
-	with b1:
-	before_lang_score = st.selectbox(
-	    "語言自然度／符合規範_評分",
-	    SCORE_OPTIONS,
-	    index=SCORE_OPTIONS.index(def_int("before_lang_score")),
-	    key=f"before_lang_score_{article_id}_{reviewer_id}"
-	)
-	
-	before_lang_grade = st.selectbox(
-	    "語言自然度／符合規範_等第",
-	    GRADE_OPTIONS,
-	    index=GRADE_OPTIONS.index(def_grade("before_lang_grade")),
-	    key=f"before_lang_grade_{article_id}_{reviewer_id}"
-	)
-	
-	with b2:
-	before_logic_score = st.selectbox(
-	    "邏輯與結構_評分",
-	    SCORE_OPTIONS,
-	    index=SCORE_OPTIONS.index(def_int("before_logic_score")),
-	    key=f"before_logic_score_{article_id}_{reviewer_id}"
-	)
-	
-	before_logic_grade = st.selectbox(
-	    "邏輯與結構_等第",
-	    GRADE_OPTIONS,
-	    index=GRADE_OPTIONS.index(def_grade("before_logic_grade")),
-	    key=f"before_logic_grade_{article_id}_{reviewer_id}"
-	)
-	
-	with b3:
-	before_value_score = st.selectbox(
-	    "教學價值_評分",
-	    SCORE_OPTIONS,
-	    index=SCORE_OPTIONS.index(def_int("before_value_score")),
-	    key=f"before_value_score_{article_id}_{reviewer_id}"
-	)
-	
-	before_value_grade = st.selectbox(
-	    "教學價值_等第",
-	    GRADE_OPTIONS,
-	    index=GRADE_OPTIONS.index(def_grade("before_value_grade")),
-	    key=f"before_value_grade_{article_id}_{reviewer_id}"
-	)
-	
-	before_total = before_lang_score + before_logic_score + before_value_score
-	
-	st.metric(
-	"修改前文章_總分（自動加總）",
-	before_total
-	)
-
-
-# ======================
-# 右欄：修改後文章
-# ======================
-with col_right:
-
-    st.markdown("### 修改後文章")
-
-    st.markdown(f"**標題：** {article.get('after_title','')}")
-
-    st.text_area(
-        "內容（修改後）",
-        value=article.get("after_content", ""),
-        height=280,
-        disabled=True,
-        key=f"after_content_{article_id}_{reviewer_id}"
-    )
-
-    st.markdown("#### 評分")
-
-    a1, a2, a3 = st.columns(3)
-
-    with a1:
-        after_lang_score = st.selectbox(
-            "語言自然度／符合規範_評分（修改後）",
-            SCORE_OPTIONS,
-            index=SCORE_OPTIONS.index(def_int("after_lang_score")),
-            key=f"after_lang_score_{article_id}_{reviewer_id}"
-        )
-
-        after_lang_grade = st.selectbox(
-            "語言自然度／符合規範_等第（修改後）",
-            GRADE_OPTIONS,
-            index=GRADE_OPTIONS.index(def_grade("after_lang_grade")),
-            key=f"after_lang_grade_{article_id}_{reviewer_id}"
-        )
-
-    with a2:
-        after_logic_score = st.selectbox(
-            "邏輯與結構_評分（修改後）",
-            SCORE_OPTIONS,
-            index=SCORE_OPTIONS.index(def_int("after_logic_score")),
-            key=f"after_logic_score_{article_id}_{reviewer_id}"
-        )
-
-        after_logic_grade = st.selectbox(
-            "邏輯與結構_等第（修改後）",
-            GRADE_OPTIONS,
-            index=GRADE_OPTIONS.index(def_grade("after_logic_grade")),
-            key=f"after_logic_grade_{article_id}_{reviewer_id}"
-        )
-
-    with a3:
-        after_value_score = st.selectbox(
-            "教學價值_評分（修改後）",
-            SCORE_OPTIONS,
-            index=SCORE_OPTIONS.index(def_int("after_value_score")),
-            key=f"after_value_score_{article_id}_{reviewer_id}"
-        )
-
-        after_value_grade = st.selectbox(
-            "教學價值_等第（修改後）",
-            GRADE_OPTIONS,
-            index=GRADE_OPTIONS.index(def_grade("after_value_grade")),
-            key=f"after_value_grade_{article_id}_{reviewer_id}"
-        )
-
-    after_total = after_lang_score + after_logic_score + after_value_score
-
-    st.metric(
-        "修改後文章_總分（自動加總）",
-        after_total
-    )
+		# ======================
+		# 左欄：修改前文章
+		# ======================
+		with col_left:
+		
+		st.markdown("### 修改前文章")
+		
+		st.markdown(f"**標題：** {article.get('before_title','')}")
+		
+		st.text_area(
+		"內容（修改前）",
+		value=article.get("before_content", ""),
+		height=280,
+		disabled=True,
+		key=f"before_content_{article_id}_{reviewer_id}"
+		)
+		
+		st.markdown("#### 評分")
+		
+		b1, b2, b3 = st.columns(3)
+		
+		with b1:
+		before_lang_score = st.selectbox(
+			"語言自然度／符合規範_評分",
+			SCORE_OPTIONS,
+			index=SCORE_OPTIONS.index(def_int("before_lang_score")),
+			key=f"before_lang_score_{article_id}_{reviewer_id}"
+		)
+		
+		before_lang_grade = st.selectbox(
+			"語言自然度／符合規範_等第",
+			GRADE_OPTIONS,
+			index=GRADE_OPTIONS.index(def_grade("before_lang_grade")),
+			key=f"before_lang_grade_{article_id}_{reviewer_id}"
+		)
+		
+		with b2:
+		before_logic_score = st.selectbox(
+			"邏輯與結構_評分",
+			SCORE_OPTIONS,
+			index=SCORE_OPTIONS.index(def_int("before_logic_score")),
+			key=f"before_logic_score_{article_id}_{reviewer_id}"
+		)
+		
+		before_logic_grade = st.selectbox(
+			"邏輯與結構_等第",
+			GRADE_OPTIONS,
+			index=GRADE_OPTIONS.index(def_grade("before_logic_grade")),
+			key=f"before_logic_grade_{article_id}_{reviewer_id}"
+		)
+		
+		with b3:
+		before_value_score = st.selectbox(
+			"教學價值_評分",
+			SCORE_OPTIONS,
+			index=SCORE_OPTIONS.index(def_int("before_value_score")),
+			key=f"before_value_score_{article_id}_{reviewer_id}"
+		)
+		
+		before_value_grade = st.selectbox(
+			"教學價值_等第",
+			GRADE_OPTIONS,
+			index=GRADE_OPTIONS.index(def_grade("before_value_grade")),
+			key=f"before_value_grade_{article_id}_{reviewer_id}"
+		)
+		
+		before_total = before_lang_score + before_logic_score + before_value_score
+		
+		st.metric(
+		"修改前文章_總分（自動加總）",
+		before_total
+		)
+		
+		
+		# ======================
+		# 右欄：修改後文章
+		# ======================
+		with col_right:
+		
+		st.markdown("### 修改後文章")
+		
+		st.markdown(f"**標題：** {article.get('after_title','')}")
+		
+		st.text_area(
+			"內容（修改後）",
+			value=article.get("after_content", ""),
+			height=280,
+			disabled=True,
+			key=f"after_content_{article_id}_{reviewer_id}"
+		)
+		
+		st.markdown("#### 評分")
+		
+		a1, a2, a3 = st.columns(3)
+		
+		with a1:
+			after_lang_score = st.selectbox(
+				"語言自然度／符合規範_評分（修改後）",
+				SCORE_OPTIONS,
+				index=SCORE_OPTIONS.index(def_int("after_lang_score")),
+				key=f"after_lang_score_{article_id}_{reviewer_id}"
+			)
+		
+			after_lang_grade = st.selectbox(
+				"語言自然度／符合規範_等第（修改後）",
+				GRADE_OPTIONS,
+				index=GRADE_OPTIONS.index(def_grade("after_lang_grade")),
+				key=f"after_lang_grade_{article_id}_{reviewer_id}"
+			)
+		
+		with a2:
+			after_logic_score = st.selectbox(
+				"邏輯與結構_評分（修改後）",
+				SCORE_OPTIONS,
+				index=SCORE_OPTIONS.index(def_int("after_logic_score")),
+				key=f"after_logic_score_{article_id}_{reviewer_id}"
+			)
+		
+			after_logic_grade = st.selectbox(
+				"邏輯與結構_等第（修改後）",
+				GRADE_OPTIONS,
+				index=GRADE_OPTIONS.index(def_grade("after_logic_grade")),
+				key=f"after_logic_grade_{article_id}_{reviewer_id}"
+			)
+		
+		with a3:
+			after_value_score = st.selectbox(
+				"教學價值_評分（修改後）",
+				SCORE_OPTIONS,
+				index=SCORE_OPTIONS.index(def_int("after_value_score")),
+				key=f"after_value_score_{article_id}_{reviewer_id}"
+			)
+		
+			after_value_grade = st.selectbox(
+				"教學價值_等第（修改後）",
+				GRADE_OPTIONS,
+				index=GRADE_OPTIONS.index(def_grade("after_value_grade")),
+				key=f"after_value_grade_{article_id}_{reviewer_id}"
+			)
+		
+		after_total = after_lang_score + after_logic_score + after_value_score
+		
+		st.metric(
+			"修改後文章_總分（自動加總）",
+			after_total
+		)
 
 
 # ======================
