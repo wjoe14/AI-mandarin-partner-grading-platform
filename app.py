@@ -27,6 +27,11 @@ textarea:disabled {
 </style>
 """, unsafe_allow_html=True)
 
+div[data-testid="stTextArea"] textarea {
+    font-size: 17px !important;
+    line-height: 1.8 !important;
+}
+
 st.markdown("""
 <style>
 
