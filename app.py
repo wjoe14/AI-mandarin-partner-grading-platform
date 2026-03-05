@@ -440,6 +440,4 @@ with col2:
                 st.success("已提交，前往下一篇…")
                 st.rerun()
 
-except Exception as e:
-    st.error("App 啟動時發生錯誤（但我沒有讓它變成 503）。")
-    st.exception(e)
+
