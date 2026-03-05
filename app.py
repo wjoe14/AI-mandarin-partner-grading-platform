@@ -77,21 +77,7 @@ GRADE_OPTIONS = ["A", "B", "C"]
 # ===== Supabase REST helpers =====
 def _req(method: str, path: str, params=None, data=None):
     url = f"{REST_BASE}/{path}"
-    try:
-        r = requests.request(
-            method,
-            url,
-            headers=HEADERS,
-            params=params,
-            data=data,
-            timeout=20,
-        )
-        # 把錯誤內容也顯示出來，方便你排錯
-        if not r.ok:
-            raise RuntimeError(f"Supabase API 失敗：{r.status_code}\n{r.text}")
-        return r
-    except requests.RequestException as e:
-        raise RuntimeError(f"連線 Supabase 失敗：{e}")
+    
 
 def sb_get(table, select="*", params=None):
     q = {"select": select}
@@ -494,6 +480,4 @@ with col_right:
                 st.success("已提交，前往下一篇…")
                 st.rerun()
 
-except Exception as e:
-    st.error("App 啟動時發生錯誤（但我沒有讓它變成 503）。")
-    st.exception(e)
+
