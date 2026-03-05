@@ -387,12 +387,22 @@ try:
 
         st.markdown("---")
 
-        article = get_next_article(reviewer_id)
-        if not article:
-            st.success("你已完成所有文章的評分，謝謝！")
+        # 用跳轉選單決定目前文章
+        article_id = st.session_state.get("current_article_id")
+        
+        if not article_id:
+            st.success("目前沒有文章可評分。")
             st.stop()
-
-        article_id = article["id"]
+        
+        # 抓這篇文章內容
+        art_rows = sb_get("articles", select="*", params={"id": f"eq.{article_id}", "limit": 1})
+        if not art_rows:
+            st.error("找不到指定文章，可能已被刪除或尚未匯入。")
+            st.stop()
+        
+        article = art_rows[0]
+        
+        # 抓這位老師對這篇文章的評分（可能已提交，仍允許修改）
         review = get_review(reviewer_id, article_id) or {}
         def def_int(key):
             v = review.get(key)
