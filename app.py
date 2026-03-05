@@ -360,8 +360,6 @@ try:
 
         col_left, col_right = st.columns(2)
 
-                col_left, col_right = st.columns(2)
-
         # ======================
         # 左欄：修改前文章
         # ======================
