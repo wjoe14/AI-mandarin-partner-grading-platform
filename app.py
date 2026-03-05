@@ -355,17 +355,76 @@ try:
         article_id = article["id"]
         review = get_review(reviewer_id, article_id) or {}
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("#### 修改前文章")
-            st.markdown(f"**標題：** {article.get('before_title','')}")
-            st.text_area("內容（修改前）", value=article.get("before_content", ""), height=280, disabled=True)
-        with col2:
-            st.markdown("#### 修改後文章")
-            st.markdown(f"**標題：** {article.get('after_title','')}")
-            st.text_area("內容（修改後）", value=article.get("after_content", ""), height=280, disabled=True)
+        col_left, col_right = st.columns(2)
 
-        st.markdown("### 評分表單（12 欄位皆需填寫）")
+# ======================
+# 左邊：修改前文章 + 評分
+# ======================
+with col_left:
+
+    st.markdown("### 修改前文章")
+
+    st.markdown(f"**標題：** {article.get('before_title','')}")
+
+    st.text_area(
+        "內容（修改前）",
+        value=article.get("before_content", ""),
+        height=280,
+        disabled=True
+    )
+
+    st.markdown("#### 評分")
+
+    before_lang_score = st.selectbox(
+        "語言自然度／符合規範_評分",
+        SCORE_OPTIONS
+    )
+
+    before_logic_score = st.selectbox(
+        "邏輯與結構_評分",
+        SCORE_OPTIONS
+    )
+
+    before_value_score = st.selectbox(
+        "教學價值_評分",
+        SCORE_OPTIONS
+    )
+
+
+# ======================
+# 右邊：修改後文章 + 評分
+# ======================
+with col_right:
+
+    st.markdown("### 修改後文章")
+
+    st.markdown(f"**標題：** {article.get('after_title','')}")
+
+    st.text_area(
+        "內容（修改後）",
+        value=article.get("after_content", ""),
+        height=280,
+        disabled=True
+    )
+
+    st.markdown("#### 評分")
+
+    after_lang_score = st.selectbox(
+        "語言自然度／符合規範_評分",
+        SCORE_OPTIONS
+    )
+
+    after_logic_score = st.selectbox(
+        "邏輯與結構_評分",
+        SCORE_OPTIONS
+    )
+
+    after_value_score = st.selectbox(
+        "教學價值_評分",
+        SCORE_OPTIONS
+    )
+
+        st.markdown("### 評分表單（所有欄位皆需填寫）")
 
         def def_int(key):
             v = review.get(key)
