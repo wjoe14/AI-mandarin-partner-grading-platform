@@ -62,22 +62,22 @@ def parse_tbcl_txt(text: str):
         m = re.search(pattern, text, flags)
         return m.group(1).strip() if m else ""
 
-    tbcl_level = get(r"【TBCL等級】\s*(.*)")
-    article_type = get(r"【文章類型】\s*(.*)")
-    extra_info = get(r"【額外資訊】\s*(.*)")
+    tbcl_level = get(r"【TBCL等級】"s*(.*)")
+    article_type = get(r"【文章類型】"s*(.*)")
+    extra_info = get(r"【額外資訊】"s*(.*)")
 
-    before_block = get(r"【修改前文章】\s*(.*?)\n\s*----------------------------------------", flags=re.S)
-    after_block = get(r"【修改後文章】\s*(.*)$", flags=re.S)
+    before_block = get(r"【修改前文章】"s*(.*?)"n"s*----------------------------------------", flags=re.S)
+    after_block = get(r"【修改後文章】"s*(.*)$", flags=re.S)
 
     def split_title_content(block: str):
         if not block:
             return "", ""
         title = ""
         content = ""
-        mt = re.search(r"標題：\s*(.*)", block)
+        mt = re.search(r"標題："s*(.*)", block)
         if mt:
             title = mt.group(1).strip()
-        mc = re.search(r"內容：\s*(.*)", block, flags=re.S)
+        mc = re.search(r"內容："s*(.*)", block, flags=re.S)
         if mc:
             content = mc.group(1).strip()
         return title, content
