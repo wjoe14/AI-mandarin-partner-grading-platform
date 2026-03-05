@@ -357,6 +357,13 @@ try:
 
         article_id = article["id"]
         review = get_review(reviewer_id, article_id) or {}
+        def def_int(key):
+            v = review.get(key)
+            return int(v) if v in SCORE_OPTIONS else 0
+        def def_grade(key):
+            v = review.get(key)
+            return v if v in GRADE_OPTIONS else "A"
+        
 
         col_left, col_right = st.columns(2)
 
