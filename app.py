@@ -93,13 +93,7 @@ def sb_upsert(table, rows, on_conflict=None):
     params = {}
     if on_conflict:
         params["on_conflict"] = on_conflict
-    try:
-        r = requests.post(url, headers=headers, params=params, data=json.dumps(rows), timeout=20)
-        if not r.ok:
-            raise RuntimeError(f"Supabase upsert 失敗：{r.status_code}\n{r.text}")
-        return r.json() if r.text else []
-    except requests.RequestException as e:
-        raise RuntimeError(f"連線 Supabase 失敗：{e}")
+    
 
 def sb_patch(table, match_params, patch_obj):
     r = _req("PATCH", table, params=match_params, data=json.dumps(patch_obj))
