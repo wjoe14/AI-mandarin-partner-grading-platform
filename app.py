@@ -256,7 +256,7 @@ if mode == "維護者後台端":
         st.error("reviewers 表沒有任何 active 老師，請先新增 5 位老師姓名。")
     else:
         total_articles = len(sb_get("articles", select="id"))
-        st.write(f\"文章總數：**{total_articles}**\")
+        st.write(f"文章總數：**{total_articles}**")
         st.write(f\"預期評分總數（文章×老師）：**{total_articles * len(reviewers)}**\")
 
         prog = []
