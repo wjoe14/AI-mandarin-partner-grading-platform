@@ -8,6 +8,33 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(page_title="AI華語拍檔-人工評閱華語教材語篇品質評分平台", layout="wide")
+
+st.markdown("""
+<style>
+
+/* 所有一般文字 */
+p, span, label, div {
+    color: black !important;
+}
+
+/* text_area 內的文字 */
+textarea {
+    color: black !important;
+}
+
+/* markdown 標題 */
+h1, h2, h3, h4, h5 {
+    color: black !important;
+}
+
+/* sidebar 文字 */
+section[data-testid="stSidebar"] * {
+    color: black !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 col1, col2 = st.columns([1,6])
 
 with col1:
