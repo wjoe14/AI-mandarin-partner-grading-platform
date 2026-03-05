@@ -7,33 +7,7 @@ import requests
 import pandas as pd
 import streamlit as st
 
-
 st.set_page_config(page_title="AI華語拍檔-人工評閱華語教材語篇品質評分平台", layout="wide")
-
-st.markdown("""
-<style>
-
-.article-box {
-    background-color: white;
-    border: 1px solid #DDD;
-    border-radius: 8px;
-    padding: 20px;
-    height: 280px;
-    overflow-y: auto;
-    color: black;
-    font-size: 17px;
-    line-height: 1.8;
-}
-
-.article-title {
-    font-weight: bold;
-    font-size: 20px;
-    margin-bottom: 10px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
 col1, col2 = st.columns([1,6])
 
 with col1:
@@ -342,33 +316,15 @@ try:
         article_id = article["id"]
         review = get_review(reviewer_id, article_id) or {}
 
-    col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown("#### 修改前文章")
-    st.markdown(f"<div class='article-title'>{article.get('before_title','')}</div>", unsafe_allow_html=True)
-
-    st.markdown(
-        f"""
-        <div class="article-box">
-        {article.get("before_content","").replace("\n","<br>")}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-with col2:
-    st.markdown("#### 修改後文章")
-    st.markdown(f"<div class='article-title'>{article.get('after_title','')}</div>", unsafe_allow_html=True)
-
-    st.markdown(
-        f"""
-        <div class="article-box">
-        {article.get("after_content","").replace("\n","<br>")}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("#### 修改前文章")
+            st.markdown(f"**標題：** {article.get('before_title','')}")
+            st.text_area("內容（修改前）", value=article.get("before_content", ""), height=280, disabled=True)
+        with col2:
+            st.markdown("#### 修改後文章")
+            st.markdown(f"**標題：** {article.get('after_title','')}")
+            st.text_area("內容（修改後）", value=article.get("after_content", ""), height=280, disabled=True)
 
         st.markdown("### 評分表單（12 欄位皆需填寫）")
 
@@ -440,4 +396,6 @@ with col2:
                 st.success("已提交，前往下一篇…")
                 st.rerun()
 
-
+except Exception as e:
+    st.error("App 啟動時發生錯誤（但我沒有讓它變成 503）。")
+    st.exception(e)
