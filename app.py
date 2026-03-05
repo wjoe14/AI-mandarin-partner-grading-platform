@@ -7,8 +7,8 @@ import requests
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="AI教材評分平台", layout="wide")
-st.title("AI教材評分平台")
+st.set_page_config(page_title="AI華語拍檔-人工評閱華語教材語篇品質評分平台", layout="wide")
+st.title("AI華語拍檔-人工評閱華語教材語篇品質評分平台")
 
 # ===== Secrets =====
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "").rstrip("/")
