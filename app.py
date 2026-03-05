@@ -360,7 +360,7 @@ try:
         after_total = after_lang_score + after_logic_score + after_value_score
         st.metric("修改後文章_總分（自動加總）", after_total)
 
-        comment = st.text_area("評語（可選）", value=review.get("comment") or "", height=120)
+        comment = st.text_area("留言（非必填）", value=review.get("comment") or "", height=120)
 
         payload = {
             "before_lang_score": before_lang_score,
