@@ -375,7 +375,7 @@ try:
             st.markdown(f"**標題：** {article.get('before_title','')}")
 
             st.text_area(
-                "內容（修改前）",
+                "[前]內容",
                 value=article.get("before_content", ""),
                 height=280,
                 disabled=True,
@@ -387,13 +387,13 @@ try:
 
             with b1:
                 before_lang_score = st.selectbox(
-                    "語言自然度／符合規範_評分",
+                    "[前]語言自然度／符合規範_評分",
                     SCORE_OPTIONS,
                     index=SCORE_OPTIONS.index(def_int("before_lang_score")),
                     key=f"before_lang_score_{article_id}_{reviewer_id}"
                 )
                 before_lang_grade = st.selectbox(
-                    "語言自然度／符合規範_等第",
+                    "[前]語言自然度／符合規範_等第",
                     GRADE_OPTIONS,
                     index=GRADE_OPTIONS.index(def_grade("before_lang_grade")),
                     key=f"before_lang_grade_{article_id}_{reviewer_id}"
@@ -401,13 +401,13 @@ try:
 
             with b2:
                 before_logic_score = st.selectbox(
-                    "邏輯與結構_評分",
+                    "[前]邏輯與結構_評分",
                     SCORE_OPTIONS,
                     index=SCORE_OPTIONS.index(def_int("before_logic_score")),
                     key=f"before_logic_score_{article_id}_{reviewer_id}"
                 )
                 before_logic_grade = st.selectbox(
-                    "邏輯與結構_等第",
+                    "[前]邏輯與結構_等第",
                     GRADE_OPTIONS,
                     index=GRADE_OPTIONS.index(def_grade("before_logic_grade")),
                     key=f"before_logic_grade_{article_id}_{reviewer_id}"
@@ -415,13 +415,13 @@ try:
 
             with b3:
                 before_value_score = st.selectbox(
-                    "教學價值_評分",
+                    "[前]教學價值_評分",
                     SCORE_OPTIONS,
                     index=SCORE_OPTIONS.index(def_int("before_value_score")),
                     key=f"before_value_score_{article_id}_{reviewer_id}"
                 )
                 before_value_grade = st.selectbox(
-                    "教學價值_等第",
+                    "[前]教學價值_等第",
                     GRADE_OPTIONS,
                     index=GRADE_OPTIONS.index(def_grade("before_value_grade")),
                     key=f"before_value_grade_{article_id}_{reviewer_id}"
@@ -438,7 +438,7 @@ try:
             st.markdown(f"**標題：** {article.get('after_title','')}")
 
             st.text_area(
-                "(後)內容",
+                "[後]內容",
                 value=article.get("after_content", ""),
                 height=280,
                 disabled=True,
@@ -450,13 +450,13 @@ try:
 
             with a1:
                 after_lang_score = st.selectbox(
-                    "(後)語言自然度／符合規範_評分",
+                    "[後]語言自然度／符合規範_評分",
                     SCORE_OPTIONS,
                     index=SCORE_OPTIONS.index(def_int("after_lang_score")),
                     key=f"after_lang_score_{article_id}_{reviewer_id}"
                 )
                 after_lang_grade = st.selectbox(
-                    "(後)語言自然度／符合規範_等第",
+                    "[後]語言自然度／符合規範_等第",
                     GRADE_OPTIONS,
                     index=GRADE_OPTIONS.index(def_grade("after_lang_grade")),
                     key=f"after_lang_grade_{article_id}_{reviewer_id}"
@@ -464,13 +464,13 @@ try:
 
             with a2:
                 after_logic_score = st.selectbox(
-                    "(後)邏輯與結構_評分",
+                    "[後]邏輯與結構_評分",
                     SCORE_OPTIONS,
                     index=SCORE_OPTIONS.index(def_int("after_logic_score")),
                     key=f"after_logic_score_{article_id}_{reviewer_id}"
                 )
                 after_logic_grade = st.selectbox(
-                    "(後)邏輯與結構_等第",
+                    "[後]邏輯與結構_等第",
                     GRADE_OPTIONS,
                     index=GRADE_OPTIONS.index(def_grade("after_logic_grade")),
                     key=f"after_logic_grade_{article_id}_{reviewer_id}"
@@ -478,13 +478,13 @@ try:
 
             with a3:
                 after_value_score = st.selectbox(
-                    "(後)教學價值_評分",
+                    "[後]教學價值_評分",
                     SCORE_OPTIONS,
                     index=SCORE_OPTIONS.index(def_int("after_value_score")),
                     key=f"after_value_score_{article_id}_{reviewer_id}"
                 )
                 after_value_grade = st.selectbox(
-                    "(後)教學價值_等第",
+                    "[後]教學價值_等第",
                     GRADE_OPTIONS,
                     index=GRADE_OPTIONS.index(def_grade("after_value_grade")),
                     key=f"after_value_grade_{article_id}_{reviewer_id}"
