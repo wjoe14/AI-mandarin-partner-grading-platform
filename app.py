@@ -77,6 +77,10 @@ HEADERS = {
 SCORE_OPTIONS = [0, 1, 2, 3]
 GRADE_OPTIONS = ["A", "B", "C"]
 
+# UI 用：多一個「未評」當預設
+SCORE_OPTIONS_UI = ["未評"] + SCORE_OPTIONS
+GRADE_OPTIONS_UI = ["未評"] + GRADE_OPTIONS
+
 # ===== Supabase REST helpers =====
 def _req(method: str, path: str, params=None, data=None):
     url = f"{REST_BASE}/{path}"
@@ -397,13 +401,14 @@ try:
         article = art_rows[0]
         review = get_review(reviewer_id, article_id) or {}
 
-        def def_int(key):
+        def def_score(key):  
             v = review.get(key)
-            return int(v) if v in SCORE_OPTIONS else 0
+            # Supabase 回來可能是 int 或 None
+            return int(v) if v in SCORE_OPTIONS else "未評"
 
         def def_grade(key):
             v = review.get(key)
-            return v if v in GRADE_OPTIONS else "A"
+            return v if v in GRADE_OPTIONS else "未評"
 
         col_left, col_right = st.columns(2)
 
@@ -428,47 +433,65 @@ try:
             with b1:
                 before_lang_score = st.selectbox(
                     "[前]語言自然度／符合規範_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("before_lang_score")),
+                    SCORE_OPTIONS_UI,
+                    index=SCORE_OPTIONS_UI.index(def_score("before_lang_score")),
                     key=f"before_lang_score_{article_id}_{reviewer_id}"
                 )
                 before_lang_grade = st.selectbox(
                     "[前]語言自然度／符合規範_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("before_lang_grade")),
+                    GRADE_OPTIONS_UI,
+                    index=GRADE_OPTIONS_UI.index(def_grade("before_lang_grade")),
                     key=f"before_lang_grade_{article_id}_{reviewer_id}"
                 )
 
             with b2:
                 before_logic_score = st.selectbox(
                     "[前]邏輯與結構_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("before_logic_score")),
+                    SCORE_OPTIONS_UI,
+                    index=SCORE_OPTIONS_UI.index(def_score("before_logic_score")),
                     key=f"before_logic_score_{article_id}_{reviewer_id}"
                 )
                 before_logic_grade = st.selectbox(
                     "[前]邏輯與結構_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("before_logic_grade")),
+                    GRADE_OPTIONS_UI,
+                    index=GRADE_OPTIONS_UI.index(def_grade("before_logic_grade")),
                     key=f"before_logic_grade_{article_id}_{reviewer_id}"
                 )
 
             with b3:
                 before_value_score = st.selectbox(
                     "[前]教學價值_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("before_value_score")),
+                    SCORE_OPTIONS_UI,
+                    index=SCORE_OPTIONS_UI.index(def_score("before_value_score")),
                     key=f"before_value_score_{article_id}_{reviewer_id}"
                 )
                 before_value_grade = st.selectbox(
                     "[前]教學價值_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("before_value_grade")),
+                    GRADE_OPTIONS_UI,
+                    index=GRADE_OPTIONS_UI.index(def_grade("before_value_grade")),
                     key=f"before_value_grade_{article_id}_{reviewer_id}"
                 )
 
-            before_total = before_lang_score + before_logic_score + before_value_score
-            st.metric("修改前文章_總分（自動加總）", before_total)
+                def _to_int_or_none(v):
+                    return None if v == "未評" else int(v)
+                
+                def _to_grade_or_none(v):
+                    return None if v == "未評" else v
+                
+                b_lang = _to_int_or_none(before_lang_score)
+                b_logic = _to_int_or_none(before_logic_score)
+                b_value = _to_int_or_none(before_value_score)
+                
+                a_lang = _to_int_or_none(after_lang_score)
+                a_logic = _to_int_or_none(after_logic_score)
+                a_value = _to_int_or_none(after_value_score)
+                
+                # 總分：如果三個都評了才顯示數字，否則顯示「未評」
+                before_total = (b_lang + b_logic + b_value) if (b_lang is not None and b_logic is not None and b_value is not None) else None
+                after_total  = (a_lang + a_logic + a_value) if (a_lang is not None and a_logic is not None and a_value is not None) else None
+                
+                st.metric("修改前文章_總分（自動加總）", before_total if before_total is not None else "未評")
+                st.metric("修改後文章_總分（自動加總）", after_total if after_total is not None else "未評")
 
         # ======================
         # 右欄：修改後文章
@@ -491,42 +514,42 @@ try:
             with a1:
                 after_lang_score = st.selectbox(
                     "[後]語言自然度／符合規範_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("after_lang_score")),
+                    SCORE_OPTIONS_UI,
+                    index=SCORE_OPTIONS_UI.index(def_score("after_lang_score")),
                     key=f"after_lang_score_{article_id}_{reviewer_id}"
                 )
                 after_lang_grade = st.selectbox(
                     "[後]語言自然度／符合規範_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("after_lang_grade")),
+                    GRADE_OPTIONS_UI,
+                    index=GRADE_OPTIONS_UI.index(def_grade("after_lang_grade")),
                     key=f"after_lang_grade_{article_id}_{reviewer_id}"
                 )
 
             with a2:
                 after_logic_score = st.selectbox(
                     "[後]邏輯與結構_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("after_logic_score")),
+                    SCORE_OPTIONS_UI,
+                    index=SCORE_OPTIONS_UI.index(def_score("after_logic_score")),
                     key=f"after_logic_score_{article_id}_{reviewer_id}"
                 )
                 after_logic_grade = st.selectbox(
                     "[後]邏輯與結構_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("after_logic_grade")),
+                    GRADE_OPTIONS_UI,
+                    index=GRADE_OPTIONS_UI.index(def_grade("after_logic_grade")),
                     key=f"after_logic_grade_{article_id}_{reviewer_id}"
                 )
 
             with a3:
                 after_value_score = st.selectbox(
                     "[後]教學價值_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("after_value_score")),
+                    SCORE_OPTIONS_UI,
+                    index=SCORE_OPTIONS_UI.index(def_score("after_value_score")),
                     key=f"after_value_score_{article_id}_{reviewer_id}"
                 )
                 after_value_grade = st.selectbox(
                     "[後]教學價值_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("after_value_grade")),
+                    GRADE_OPTIONS_UI,
+                    index=GRADE_OPTIONS_UI.index(def_grade("after_value_grade")),
                     key=f"after_value_grade_{article_id}_{reviewer_id}"
                 )
 
@@ -544,21 +567,41 @@ try:
         )
 
         payload = {
-            "before_lang_score": before_lang_score,
-            "before_lang_grade": before_lang_grade,
-            "before_logic_score": before_logic_score,
-            "before_logic_grade": before_logic_grade,
-            "before_value_score": before_value_score,
-            "before_value_grade": before_value_grade,
-            "after_lang_score": after_lang_score,
-            "after_lang_grade": after_lang_grade,
-            "after_logic_score": after_logic_score,
-            "after_logic_grade": after_logic_grade,
-            "after_value_score": after_value_score,
-            "after_value_grade": after_value_grade,
+            "before_lang_score": b_lang,
+            "before_lang_grade": _to_grade_or_none(before_lang_grade),
+            "before_logic_score": b_logic,
+            "before_logic_grade": _to_grade_or_none(before_logic_grade),
+            "before_value_score": b_value,
+            "before_value_grade": _to_grade_or_none(before_value_grade),
+            "after_lang_score": a_lang,
+            "after_lang_grade": _to_grade_or_none(after_lang_grade),
+            "after_logic_score": a_logic,
+            "after_logic_grade": _to_grade_or_none(after_logic_grade),
+            "after_value_score": a_value,
+            "after_value_grade": _to_grade_or_none(after_value_grade),
             "comment": comment,
         }
 
+
+        # ======================
+        # 檢查是否仍有「未評」
+        # ======================
+        required_ok = all([
+            b_lang is not None, b_logic is not None, b_value is not None,
+            a_lang is not None, a_logic is not None, a_value is not None,
+            _to_grade_or_none(before_lang_grade) is not None,
+            _to_grade_or_none(before_logic_grade) is not None,
+            _to_grade_or_none(before_value_grade) is not None,
+            _to_grade_or_none(after_lang_grade) is not None,
+            _to_grade_or_none(after_logic_grade) is not None,
+            _to_grade_or_none(after_value_grade) is not None,
+        ])
+
+        if not required_ok:
+            st.warning("還有評分或等第為「未評」，提交前請先完成所有欄位。")
+        # ======================
+        # 三個操作按鈕
+        # ======================
         # 文章 id 清單，用來做上一篇/下一篇
         article_ids = [a["id"] for a in all_articles]
         cur_idx = article_ids.index(article_id) if article_id in article_ids else 0
@@ -573,17 +616,33 @@ try:
 
         with c2:
             if st.button("提交並前往下一篇", key=f"btn_submit_next_{article_id}_{reviewer_id}"):
+        
+                if not required_ok:
+                    st.error("尚未完成所有評分或等第，無法提交。")
+                    st.stop()
+        
                 save_review(reviewer_id, article_id, payload, submitted=True)
+        
+                # 下一篇：若有就跳，沒有就留在最後一篇
                 if cur_idx < len(article_ids) - 1:
                     st.session_state["current_article_id"] = article_ids[cur_idx + 1]
+        
                 st.success("已提交。")
                 st.rerun()
 
         with c3:
             if st.button("提交並回到上一篇", key=f"btn_submit_prev_{article_id}_{reviewer_id}"):
+        
+                if not required_ok:
+                    st.error("尚未完成所有評分或等第，無法提交。")
+                    st.stop()
+        
                 save_review(reviewer_id, article_id, payload, submitted=True)
+        
+                # 上一篇：若有就跳，沒有就留在第一篇
                 if cur_idx > 0:
                     st.session_state["current_article_id"] = article_ids[cur_idx - 1]
+        
                 st.success("已提交。")
                 st.rerun()
 
