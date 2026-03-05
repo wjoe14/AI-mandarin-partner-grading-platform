@@ -290,7 +290,7 @@ try:
             st.stop()
 
         name_list = [r["name"] for r in reviewers]
-        teacher_name = st.selectbox("請選擇你的姓名登入", name_list)
+        teacher_name = st.selectbox("請選擇你的姓名登入，別選錯了喔！", name_list)
 
         reviewer_id = [r["reviewer_id"] for r in reviewers if r["name"] == teacher_name][0]
         done, total = get_progress(reviewer_id)
