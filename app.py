@@ -527,7 +527,7 @@ try:
                 st.success("已儲存（未提交）。")
                 st.rerun()
         with c2:
-            if st.button("提交並下一篇"):
+            if st.button("提交並前往下一篇"):
                 save_review(reviewer_id, article_id, payload, submitted=True)
                 st.success("已提交，前往下一篇…")
                 st.rerun()
