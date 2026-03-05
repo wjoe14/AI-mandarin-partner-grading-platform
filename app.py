@@ -7,21 +7,13 @@ import requests
 import pandas as pd
 import streamlit as st
 
-# ------------------------------------------------------------
-# 1) Page config MUST be the first Streamlit command
-# ------------------------------------------------------------
-st.set_page_config(
-    page_title="AI華語拍檔-人工評閱華語教材語篇品質評分平台",
-    layout="wide"
-)
+st.set_page_config(page_title="AI華語拍檔-人工評閱華語教材語篇品質評分平台", layout="wide")
 
-# ------------------------------------------------------------
-# 2) CSS (force all text to black + disabled textarea black)
-# ------------------------------------------------------------
+
 st.markdown("""
 <style>
 
-/* Streamlit text_area（包含 disabled）文字全黑 + 更好讀 */
+/* Streamlit text_area（包含 disabled）文字全黑 */
 div[data-testid="stTextArea"] textarea {
     color: #000 !important;
     -webkit-text-fill-color: #000 !important;
@@ -30,7 +22,7 @@ div[data-testid="stTextArea"] textarea {
     line-height: 1.8 !important;
 }
 
-/* 保險：所有 disabled textarea 都強制黑字 */
+/* disabled 的 text_area 也強制黑字 */
 textarea:disabled {
     color: #000 !important;
     -webkit-text-fill-color: #000 !important;
@@ -55,31 +47,20 @@ section[data-testid="stSidebar"] * {
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------------------------------------------------
-# 3) Header (logo + title)
-# ------------------------------------------------------------
-LOGO_CANDIDATES = [
-    "華語拍檔LOGO去背檔（白底純頭像）.png",  
-]
-logo_path = next((p for p in LOGO_CANDIDATES if os.path.exists(p)), None)
+col1, col2 = st.columns([1,6])
 
-col1, col2 = st.columns([1, 6])
 with col1:
-    if logo_path:
-        st.image(logo_path, width=100)
-    else:
-        st.markdown("## 🧠")
+    st.image("華語拍檔LOGO去背檔（白底純頭像）.png", width=100)
+
 with col2:
     st.title("AI華語拍檔-人工評閱華語教材語篇品質評分平台")
 
-# ------------------------------------------------------------
-# 4) Secrets
-# ------------------------------------------------------------
+# ===== Secrets =====
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_ANON_KEY = st.secrets.get("SUPABASE_ANON_KEY", "")
 
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
-    st.error("缺少 Secrets：SUPABASE_URL 或 SUPABASE_ANON_KEY。請到 Streamlit Cloud → Manage app → Secrets 設定。")
+    st.error("缺少 Secrets：SUPABASE_URL 或 SUPABASE_ANON_KEY。請到 Streamlit → Settings → Secrets 設定。")
     st.stop()
 
 REST_BASE = f"{SUPABASE_URL}/rest/v1"
@@ -93,21 +74,19 @@ HEADERS = {
 SCORE_OPTIONS = [0, 1, 2, 3]
 GRADE_OPTIONS = ["A", "B", "C"]
 
-# ------------------------------------------------------------
-# 5) Supabase REST helpers
-# ------------------------------------------------------------
-def _req(method: str, path: str, params=None, data=None, headers=None):
+# ===== Supabase REST helpers =====
+def _req(method: str, path: str, params=None, data=None):
     url = f"{REST_BASE}/{path}"
-    h = headers if headers is not None else HEADERS
     try:
         r = requests.request(
-            method=method,
-            url=url,
-            headers=h,
+            method,
+            url,
+            headers=HEADERS,
             params=params,
             data=data,
             timeout=20,
         )
+        # 把錯誤內容也顯示出來，方便你排錯
         if not r.ok:
             raise RuntimeError(f"Supabase API 失敗：{r.status_code}\n{r.text}")
         return r
@@ -124,19 +103,23 @@ def sb_get(table, select="*", params=None):
 def sb_upsert(table, rows, on_conflict=None):
     headers = dict(HEADERS)
     headers["Prefer"] = "resolution=merge-duplicates"
+    url = f"{REST_BASE}/{table}"
     params = {}
     if on_conflict:
         params["on_conflict"] = on_conflict
-    r = _req("POST", table, params=params, data=json.dumps(rows), headers=headers)
-    return r.json() if r.text else []
+    try:
+        r = requests.post(url, headers=headers, params=params, data=json.dumps(rows), timeout=20)
+        if not r.ok:
+            raise RuntimeError(f"Supabase upsert 失敗：{r.status_code}\n{r.text}")
+        return r.json() if r.text else []
+    except requests.RequestException as e:
+        raise RuntimeError(f"連線 Supabase 失敗：{e}")
 
 def sb_patch(table, match_params, patch_obj):
     r = _req("PATCH", table, params=match_params, data=json.dumps(patch_obj))
     return r.json() if r.text else []
 
-# ------------------------------------------------------------
-# 6) TXT parser
-# ------------------------------------------------------------
+# ===== TXT parser =====
 def parse_tbcl_txt(text: str):
     def get(pattern, flags=0):
         m = re.search(pattern, text, flags)
@@ -189,9 +172,7 @@ def read_uploaded_as_txt_or_zip(uploaded_file):
         return out
     return [(name, data)]
 
-# ------------------------------------------------------------
-# 7) Domain logic
-# ------------------------------------------------------------
+# ===== Domain logic =====
 def get_reviewers(active_only=True):
     params = {"order": "name.asc"}
     if active_only:
@@ -281,47 +262,42 @@ def export_all_df():
         "額外資訊": df["extra_info"],
         "修改前文章_標題": df["before_title"],
         "修改前文章_內容": df["before_content"],
-        "修改前文章_語言自然度／符合規範_評分": df.get("before_lang_score"),
-        "修改前文章_語言自然度／符合規範_等第": df.get("before_lang_grade"),
-        "修改前文章_邏輯與結構_評分": df.get("before_logic_score"),
-        "修改前文章_邏輯與結構_等第": df.get("before_logic_grade"),
-        "修改前文章_教學價值_評分": df.get("before_value_score"),
-        "修改前文章_教學價值_等第": df.get("before_value_grade"),
-        "修改前文章_總分": df.get("before_total_score"),
+        "修改前文章_語言自然度／符合規範_評分": df["before_lang_score"],
+        "修改前文章_語言自然度／符合規範_等第": df["before_lang_grade"],
+        "修改前文章_邏輯與結構_評分": df["before_logic_score"],
+        "修改前文章_邏輯與結構_等第": df["before_logic_grade"],
+        "修改前文章_教學價值_評分": df["before_value_score"],
+        "修改前文章_教學價值_等第": df["before_value_grade"],
+        "修改前文章_總分": df["before_total_score"],
         "修改後文章_標題": df["after_title"],
         "修改後文章_內容": df["after_content"],
-        "修改後文章_語言自然度／符合規範_評分": df.get("after_lang_score"),
-        "修改後文章_語言自然度／符合規範_等第": df.get("after_lang_grade"),
-        "修改後文章_邏輯與結構_評分": df.get("after_logic_score"),
-        "修改後文章_邏輯與結構_等第": df.get("after_logic_grade"),
-        "修改後文章_教學價值_評分": df.get("after_value_score"),
-        "修改後文章_教學價值_等第": df.get("after_value_grade"),
-        "修改後文章_總分": df.get("after_total_score"),
-        "評分老師_姓名": df.get("評分老師_姓名"),
-        "最後儲存時間": df.get("updated_at"),
+        "修改後文章_語言自然度／符合規範_評分": df["after_lang_score"],
+        "修改後文章_語言自然度／符合規範_等第": df["after_lang_grade"],
+        "修改後文章_邏輯與結構_評分": df["after_logic_score"],
+        "修改後文章_邏輯與結構_等第": df["after_logic_grade"],
+        "修改後文章_教學價值_評分": df["after_value_score"],
+        "修改後文章_教學價值_等第": df["after_value_grade"],
+        "修改後文章_總分": df["after_total_score"],
+        "評分老師_姓名": df["評分老師_姓名"],
+        "最後儲存時間": df["updated_at"],
     })
     return out.sort_values(["id", "評分老師_姓名"], na_position="last")
 
-# ------------------------------------------------------------
-# 8) UI (guarded)
-# ------------------------------------------------------------
+# ===== UI (with guard) =====
 try:
-    mode = st.sidebar.radio("模式", ["評分老師端", "維護者後台端"], key="mode")
+    mode = st.sidebar.radio("模式", ["評分老師端", "維護者後台端"])
 
-    # -------------------------
-    # Maintainer
-    # -------------------------
     if mode == "維護者後台端":
         st.subheader("維護者後台端")
 
         st.markdown("### 1) 一鍵匯入文章（txt 或 zip）")
-        uploaded = st.file_uploader("上傳 txt 或 zip（可多選）", type=["txt", "zip"], accept_multiple_files=True, key="uploader")
+        uploaded = st.file_uploader("上傳 txt 或 zip（可多選）", type=["txt", "zip"], accept_multiple_files=True)
         if uploaded:
             all_files = []
             for f in uploaded:
                 all_files.extend(read_uploaded_as_txt_or_zip(f))
 
-            if st.button("開始匯入", key="btn_import"):
+            if st.button("開始匯入"):
                 with st.spinner("匯入中..."):
                     ok, errors = import_txt(all_files)
                 st.success(f"完成匯入：{ok} 篇")
@@ -341,29 +317,15 @@ try:
             prog = []
             for r in reviewers:
                 done, total = get_progress(r["reviewer_id"])
-                prog.append({
-                    "老師": r["name"],
-                    "已提交": done,
-                    "應提交": total,
-                    "完成率": (done / total) if total else 0
-                })
+                prog.append({"老師": r["name"], "已提交": done, "應提交": total, "完成率": (done / total) if total else 0})
             st.dataframe(pd.DataFrame(prog), use_container_width=True)
 
         st.markdown("### 3) 一鍵匯出所有評分結果 CSV")
-        if st.button("產生匯出檔", key="btn_export"):
+        if st.button("產生匯出檔"):
             df = export_all_df()
             csv_bytes = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
-            st.download_button(
-                "下載 CSV（全體評分結果）",
-                data=csv_bytes,
-                file_name="ai_grading_results.csv",
-                mime="text/csv",
-                key="download_csv"
-            )
+            st.download_button("下載 CSV（全體評分結果）", data=csv_bytes, file_name="ai_grading_results.csv", mime="text/csv")
 
-    # -------------------------
-    # Reviewer
-    # -------------------------
     else:
         st.subheader("評分老師端")
 
@@ -373,7 +335,7 @@ try:
             st.stop()
 
         name_list = [r["name"] for r in reviewers]
-        teacher_name = st.selectbox("請選擇你的姓名登入，別選錯了喔！", name_list, key="teacher_name")
+        teacher_name = st.selectbox("請選擇你的姓名登入，別選錯了喔！", name_list)
 
         reviewer_id = [r["reviewer_id"] for r in reviewers if r["name"] == teacher_name][0]
         done, total = get_progress(reviewer_id)
@@ -393,137 +355,57 @@ try:
         article_id = article["id"]
         review = get_review(reviewer_id, article_id) or {}
 
-        def def_int(key, default=0):
-            v = review.get(key)
-            return int(v) if v is not None else default
-
-        def def_grade(key, default="A"):
-            v = review.get(key)
-            return v if v in GRADE_OPTIONS else default
-
-        col_left, col_right = st.columns(2)
-
-        # ======================
-        # Left: BEFORE
-        # ======================
-        with col_left:
-            st.markdown("### 修改前文章")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("#### 修改前文章")
             st.markdown(f"**標題：** {article.get('before_title','')}")
-            st.text_area(
-                "內容（修改前）",
-                value=article.get("before_content", ""),
-                height=280,
-                disabled=True,
-                key="before_content_area"
-            )
-
-            st.markdown("#### 評分（修改前）")
-            b1, b2, b3 = st.columns(3)
-
-            with b1:
-                before_lang_score = st.selectbox(
-                    "語言自然度／符合規範_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("before_lang_score")),
-                    key="before_lang_score"
-                )
-                before_lang_grade = st.selectbox(
-                    "語言自然度／符合規範_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("before_lang_grade")),
-                    key="before_lang_grade"
-                )
-            with b2:
-                before_logic_score = st.selectbox(
-                    "邏輯與結構_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("before_logic_score")),
-                    key="before_logic_score"
-                )
-                before_logic_grade = st.selectbox(
-                    "邏輯與結構_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("before_logic_grade")),
-                    key="before_logic_grade"
-                )
-            with b3:
-                before_value_score = st.selectbox(
-                    "教學價值_評分",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("before_value_score")),
-                    key="before_value_score"
-                )
-                before_value_grade = st.selectbox(
-                    "教學價值_等第",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("before_value_grade")),
-                    key="before_value_grade"
-                )
-
-            before_total = before_lang_score + before_logic_score + before_value_score
-            st.metric("修改前文章_總分（自動加總）", before_total)
-
-        # ======================
-        # Right: AFTER
-        # ======================
-        with col_right:
-            st.markdown("### 修改後文章")
+            st.text_area("內容（修改前）", value=article.get("before_content", ""), height=280, disabled=True)
+        with col2:
+            st.markdown("#### 修改後文章")
             st.markdown(f"**標題：** {article.get('after_title','')}")
-            st.text_area(
-                "內容（修改後）",
-                value=article.get("after_content", ""),
-                height=280,
-                disabled=True,
-                key="after_content_area"
-            )
+            st.text_area("內容（修改後）", value=article.get("after_content", ""), height=280, disabled=True)
 
-            st.markdown("#### 評分（修改後）")
-            a1, a2, a3 = st.columns(3)
+        st.markdown("### 評分表單（12 欄位皆需填寫）")
 
-            with a1:
-                after_lang_score = st.selectbox(
-                    "語言自然度／符合規範_評分（修改後）",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("after_lang_score")),
-                    key="after_lang_score"
-                )
-                after_lang_grade = st.selectbox(
-                    "語言自然度／符合規範_等第（修改後）",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("after_lang_grade")),
-                    key="after_lang_grade"
-                )
-            with a2:
-                after_logic_score = st.selectbox(
-                    "邏輯與結構_評分（修改後）",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("after_logic_score")),
-                    key="after_logic_score"
-                )
-                after_logic_grade = st.selectbox(
-                    "邏輯與結構_等第（修改後）",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("after_logic_grade")),
-                    key="after_logic_grade"
-                )
-            with a3:
-                after_value_score = st.selectbox(
-                    "教學價值_評分（修改後）",
-                    SCORE_OPTIONS,
-                    index=SCORE_OPTIONS.index(def_int("after_value_score")),
-                    key="after_value_score"
-                )
-                after_value_grade = st.selectbox(
-                    "教學價值_等第（修改後）",
-                    GRADE_OPTIONS,
-                    index=GRADE_OPTIONS.index(def_grade("after_value_grade")),
-                    key="after_value_grade"
-                )
+        def def_int(key):
+            v = review.get(key)
+            return int(v) if v is not None else 0
 
-            after_total = after_lang_score + after_logic_score + after_value_score
-            st.metric("修改後文章_總分（自動加總）", after_total)
+        def def_grade(key):
+            v = review.get(key)
+            return v if v in GRADE_OPTIONS else "A"
 
-        comment = st.text_area("留言（非必填）", value=review.get("comment") or "", height=120, key="comment")
+        st.markdown("#### 修改前文章")
+        b1, b2, b3 = st.columns(3)
+        with b1:
+            before_lang_score = st.selectbox("語言自然度／符合規範_評分", SCORE_OPTIONS, index=SCORE_OPTIONS.index(def_int("before_lang_score")))
+            before_lang_grade = st.selectbox("語言自然度／符合規範_等第", GRADE_OPTIONS, index=GRADE_OPTIONS.index(def_grade("before_lang_grade")))
+        with b2:
+            before_logic_score = st.selectbox("邏輯與結構_評分", SCORE_OPTIONS, index=SCORE_OPTIONS.index(def_int("before_logic_score")))
+            before_logic_grade = st.selectbox("邏輯與結構_等第", GRADE_OPTIONS, index=GRADE_OPTIONS.index(def_grade("before_logic_grade")))
+        with b3:
+            before_value_score = st.selectbox("教學價值_評分", SCORE_OPTIONS, index=SCORE_OPTIONS.index(def_int("before_value_score")))
+            before_value_grade = st.selectbox("教學價值_等第", GRADE_OPTIONS, index=GRADE_OPTIONS.index(def_grade("before_value_grade")))
+
+        before_total = before_lang_score + before_logic_score + before_value_score
+        st.metric("修改前文章_總分（自動加總）", before_total)
+
+        st.markdown("#### 修改後文章")
+        a1, a2, a3 = st.columns(3)
+        with a1:
+            after_lang_score = st.selectbox("語言自然度／符合規範_評分（修改後）", SCORE_OPTIONS, index=SCORE_OPTIONS.index(def_int("after_lang_score")))
+            after_lang_grade = st.selectbox("語言自然度／符合規範_等第（修改後）", GRADE_OPTIONS, index=GRADE_OPTIONS.index(def_grade("after_lang_grade")))
+        with a2:
+            after_logic_score = st.selectbox("邏輯與結構_評分（修改後）", SCORE_OPTIONS, index=SCORE_OPTIONS.index(def_int("after_logic_score")))
+            after_logic_grade = st.selectbox("邏輯與結構_等第（修改後）", GRADE_OPTIONS, index=GRADE_OPTIONS.index(def_grade("after_logic_grade")))
+        with a3:
+            after_value_score = st.selectbox("教學價值_評分（修改後）", SCORE_OPTIONS, index=SCORE_OPTIONS.index(def_int("after_value_score")))
+            after_value_grade = st.selectbox("教學價值_等第（修改後）", GRADE_OPTIONS, index=GRADE_OPTIONS.index(def_grade("after_value_grade")))
+
+        after_total = after_lang_score + after_logic_score + after_value_score
+        st.metric("修改後文章_總分（自動加總）", after_total)
+
+        comment = st.text_area("留言（非必填）", value=review.get("comment") or "", height=120)
 
         payload = {
             "before_lang_score": before_lang_score,
@@ -543,16 +425,16 @@ try:
 
         c1, c2 = st.columns(2)
         with c1:
-            if st.button("儲存（不提交）", key="btn_save_draft"):
+            if st.button("儲存（不提交）"):
                 save_review(reviewer_id, article_id, payload, submitted=False)
                 st.success("已儲存（未提交）。")
                 st.rerun()
         with c2:
-            if st.button("提交並下一篇", key="btn_submit_next"):
+            if st.button("提交並下一篇"):
                 save_review(reviewer_id, article_id, payload, submitted=True)
                 st.success("已提交，前往下一篇…")
                 st.rerun()
 
 except Exception as e:
-    st.error("發生錯誤：")
+    st.error("App 啟動時發生錯誤（但我沒有讓它變成 503）。")
     st.exception(e)
