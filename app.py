@@ -567,16 +567,34 @@ try:
         }
 
 
-        c1, c2 = st.columns(2)
+        # 文章 id 清單，用來做上一篇/下一篇
+        article_ids = [a["id"] for a in all_articles]
+        cur_idx = article_ids.index(article_id) if article_id in article_ids else 0
+        
+        c1, c2, c3 = st.columns(3)
+        
         with c1:
-            if st.button("儲存（不提交）"):
+            if st.button("儲存（不提交）", key=f"btn_save_{article_id}_{reviewer_id}"):
                 save_review(reviewer_id, article_id, payload, submitted=False)
                 st.success("已儲存（未提交）。")
                 st.rerun()
+        
         with c2:
-            if st.button("提交並前往下一篇"):
+            if st.button("提交並前往下一篇", key=f"btn_submit_next_{article_id}_{reviewer_id}"):
                 save_review(reviewer_id, article_id, payload, submitted=True)
-                st.success("已提交，前往下一篇…")
+                # 下一篇：若有就跳，沒有就留在最後一篇
+                if cur_idx < len(article_ids) - 1:
+                    st.session_state["current_article_id"] = article_ids[cur_idx + 1]
+                st.success("已提交。")
+                st.rerun()
+        
+        with c3:
+            if st.button("提交並回到上一篇", key=f"btn_submit_prev_{article_id}_{reviewer_id}"):
+                save_review(reviewer_id, article_id, payload, submitted=True)
+                # 上一篇：若有就跳，沒有就留在第一篇
+                if cur_idx > 0:
+                    st.session_state["current_article_id"] = article_ids[cur_idx - 1]
+                st.success("已提交。")
                 st.rerun()
 
 except Exception as e:
