@@ -89,7 +89,6 @@ def _req(method: str, path: str, params=None, data=None):
             data=data,
             timeout=20,
         )
-        # 把錯誤內容也顯示出來，方便你排錯
         if not r.ok:
             raise RuntimeError(f"Supabase API 失敗：{r.status_code}\n{r.text}")
         return r
@@ -322,44 +321,9 @@ try:
                 done, total = get_progress(r["reviewer_id"])
                 prog.append({"老師": r["name"], "已提交": done, "應提交": total, "完成率": (done / total) if total else 0})
             st.dataframe(pd.DataFrame(prog), use_container_width=True)
-        
-        # ===== 進度條下方：跳轉選單 =====
-        # 取出所有文章（用 before_title 顯示；若空就用 after_title；再不行用 id）
-        all_articles = sb_get(
-            "articles",
-            select="id,before_title,after_title",
-            params={"order": "id.asc"}
-        )
-        
-        def _display_title(a):
-            t = (a.get("before_title") or "").strip()
-            if not t:
-                t = (a.get("after_title") or "").strip()
-            return t if t else a["id"]
-        
-        # 預設：如果 session_state 已有目前文章，就用它；否則先用「下一篇未提交」
-        default_article = get_next_article(reviewer_id)
-        default_article_id = default_article["id"] if default_article else (all_articles[0]["id"] if all_articles else None)
-        
-        if "current_article_id" not in st.session_state:
-            st.session_state["current_article_id"] = default_article_id
-        
-        # 建立跳轉選單（顯示文章標題）
-        selected_article = st.selectbox(
-            "跳轉至指定文章",
-            options=all_articles,
-            format_func=_display_title,
-            index=next(
-                (i for i, a in enumerate(all_articles) if a["id"] == st.session_state["current_article_id"]),
-                0
-            ),
-            key="jump_to_article"
-        )
-        
-        # 更新目前文章 id
-        st.session_state["current_article_id"] = selected_article["id"]    
+
         st.markdown("---")
-        
+
         st.markdown("### 3) 一鍵匯出所有評分結果 CSV")
         if st.button("產生匯出檔"):
             df = export_all_df()
@@ -384,32 +348,30 @@ try:
         st.write(f"已提交：**{done}** / 應提交：**{total}**")
         if total > 0:
             st.progress(done / total)
-        
-        # ===== 進度條下方：跳轉選單 =====
+
+        # ===== 進度條下方：跳轉選單（老師端專用）=====
         all_articles = sb_get(
             "articles",
             select="id,before_title,after_title",
             params={"order": "id.asc"}
         )
-        
+
         if not all_articles:
             st.warning("目前資料庫沒有任何文章。請先請維護者匯入文章。")
             st.stop()
-        
+
         def _display_title(a):
             t = (a.get("before_title") or "").strip()
             if not t:
                 t = (a.get("after_title") or "").strip()
             return t if t else a["id"]
-        
+
         # 如果老師切換姓名，要重置目前文章（避免沿用上一位老師的狀態）
         if st.session_state.get("active_reviewer_id") != reviewer_id:
             st.session_state["active_reviewer_id"] = reviewer_id
-            # 預設跳到「下一篇未提交」，如果沒有就跳第一篇
             nxt = get_next_article(reviewer_id)
             st.session_state["current_article_id"] = nxt["id"] if nxt else all_articles[0]["id"]
-        
-        # 跳轉選單：用文章標題顯示
+
         selected_article = st.selectbox(
             "跳轉至指定文章",
             options=all_articles,
@@ -418,47 +380,30 @@ try:
                 (i for i, a in enumerate(all_articles) if a["id"] == st.session_state.get("current_article_id")),
                 0
             ),
-            key="jump_to_article"
+            key="jump_to_article_teacher"
         )
-        
-        # 把目前文章 id 記下來（給按鈕用）
-        st.session_state["current_article_id"] = selected_article["id"]
-        
-        st.markdown("---")
 
+        st.session_state["current_article_id"] = selected_article["id"]
+        st.markdown("---")
 
         # 用跳轉選單決定目前文章
         article_id = st.session_state["current_article_id"]
-        
+
         art_rows = sb_get("articles", select="*", params={"id": f"eq.{article_id}", "limit": 1})
         if not art_rows:
             st.error("找不到指定文章，可能已被刪除或尚未匯入。")
             st.stop()
-        
+
         article = art_rows[0]
         review = get_review(reviewer_id, article_id) or {}
-        
-        if not article_id:
-            st.success("目前沒有文章可評分。")
-            st.stop()
-        
-        # 抓這篇文章內容
-        art_rows = sb_get("articles", select="*", params={"id": f"eq.{article_id}", "limit": 1})
-        if not art_rows:
-            st.error("找不到指定文章，可能已被刪除或尚未匯入。")
-            st.stop()
-        
-        article = art_rows[0]
-        
-        # 抓這位老師對這篇文章的評分（可能已提交，仍允許修改）
-        review = get_review(reviewer_id, article_id) or {}
+
         def def_int(key):
             v = review.get(key)
             return int(v) if v in SCORE_OPTIONS else 0
+
         def def_grade(key):
             v = review.get(key)
             return v if v in GRADE_OPTIONS else "A"
-        
 
         col_left, col_right = st.columns(2)
 
@@ -589,7 +534,7 @@ try:
             st.metric("修改後文章_總分（自動加總）", after_total)
 
         # ======================
-        # 留言 + payload（一定要在 else 區塊內）
+        # 留言 + payload
         # ======================
         comment = st.text_area(
             "留言（非必填）",
@@ -614,32 +559,29 @@ try:
             "comment": comment,
         }
 
-
         # 文章 id 清單，用來做上一篇/下一篇
         article_ids = [a["id"] for a in all_articles]
         cur_idx = article_ids.index(article_id) if article_id in article_ids else 0
-        
+
         c1, c2, c3 = st.columns(3)
-        
+
         with c1:
             if st.button("儲存（不提交）", key=f"btn_save_{article_id}_{reviewer_id}"):
                 save_review(reviewer_id, article_id, payload, submitted=False)
                 st.success("已儲存（未提交）。")
                 st.rerun()
-        
+
         with c2:
             if st.button("提交並前往下一篇", key=f"btn_submit_next_{article_id}_{reviewer_id}"):
                 save_review(reviewer_id, article_id, payload, submitted=True)
-                # 下一篇：若有就跳，沒有就留在最後一篇
                 if cur_idx < len(article_ids) - 1:
                     st.session_state["current_article_id"] = article_ids[cur_idx + 1]
                 st.success("已提交。")
                 st.rerun()
-        
+
         with c3:
             if st.button("提交並回到上一篇", key=f"btn_submit_prev_{article_id}_{reviewer_id}"):
                 save_review(reviewer_id, article_id, payload, submitted=True)
-                # 上一篇：若有就跳，沒有就留在第一篇
                 if cur_idx > 0:
                     st.session_state["current_article_id"] = article_ids[cur_idx - 1]
                 st.success("已提交。")
