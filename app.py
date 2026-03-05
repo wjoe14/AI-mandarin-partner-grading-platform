@@ -9,50 +9,43 @@ import streamlit as st
 
 st.set_page_config(page_title="AI華語拍檔-人工評閱華語教材語篇品質評分平台", layout="wide")
 
+st.set_page_config(
+    page_title="AI華語拍檔-人工評閱華語教材語篇品質評分平台",
+    layout="wide"
+)
+
 st.markdown("""
 <style>
-/* 只針對 Streamlit 的 text_area（包含 disabled） */
+
+/* Streamlit text_area（包含 disabled）文字全黑 */
 div[data-testid="stTextArea"] textarea {
     color: #000 !important;
-    -webkit-text-fill-color: #000 !important; /* 這行是關鍵：讓 disabled 也變黑 */
-    opacity: 1 !important;                   /* 有時 disabled 會被降透明度 */
+    -webkit-text-fill-color: #000 !important;
+    opacity: 1 !important;
+    font-size: 17px !important;
+    line-height: 1.8 !important;
 }
 
-/* 保險：所有 disabled textarea 都強制黑字 */
+/* disabled 的 text_area 也強制黑字 */
 textarea:disabled {
     color: #000 !important;
     -webkit-text-fill-color: #000 !important;
     opacity: 1 !important;
 }
-</style>
-""", unsafe_allow_html=True)
 
-div[data-testid="stTextArea"] textarea {
-    font-size: 17px !important;
-    line-height: 1.8 !important;
-}
-
-st.markdown("""
-<style>
-
-/* 所有一般文字 */
+/* 一般文字 */
 p, span, label, div {
-    color: black !important;
+    color: #000 !important;
 }
 
-/* text_area 內的文字 */
-textarea {
-    color: black !important;
-}
-
-/* markdown 標題 */
+/* Markdown 標題 */
 h1, h2, h3, h4, h5 {
-    color: black !important;
+    color: #000 !important;
 }
 
-/* sidebar 文字 */
+/* Sidebar 文字 */
 section[data-testid="stSidebar"] * {
-    color: black !important;
+    color: #000 !important;
 }
 
 </style>
