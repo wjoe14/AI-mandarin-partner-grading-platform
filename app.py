@@ -322,7 +322,44 @@ try:
                 done, total = get_progress(r["reviewer_id"])
                 prog.append({"老師": r["name"], "已提交": done, "應提交": total, "完成率": (done / total) if total else 0})
             st.dataframe(pd.DataFrame(prog), use_container_width=True)
-
+        
+        # ===== 進度條下方：跳轉選單 =====
+        # 取出所有文章（用 before_title 顯示；若空就用 after_title；再不行用 id）
+        all_articles = sb_get(
+            "articles",
+            select="id,before_title,after_title",
+            params={"order": "id.asc"}
+        )
+        
+        def _display_title(a):
+            t = (a.get("before_title") or "").strip()
+            if not t:
+                t = (a.get("after_title") or "").strip()
+            return t if t else a["id"]
+        
+        # 預設：如果 session_state 已有目前文章，就用它；否則先用「下一篇未提交」
+        default_article = get_next_article(reviewer_id)
+        default_article_id = default_article["id"] if default_article else (all_articles[0]["id"] if all_articles else None)
+        
+        if "current_article_id" not in st.session_state:
+            st.session_state["current_article_id"] = default_article_id
+        
+        # 建立跳轉選單（顯示文章標題）
+        selected_article = st.selectbox(
+            "跳轉至指定文章",
+            options=all_articles,
+            format_func=_display_title,
+            index=next(
+                (i for i, a in enumerate(all_articles) if a["id"] == st.session_state["current_article_id"]),
+                0
+            ),
+            key="jump_to_article"
+        )
+        
+        # 更新目前文章 id
+        st.session_state["current_article_id"] = selected_article["id"]    
+        st.markdown("---")
+        
         st.markdown("### 3) 一鍵匯出所有評分結果 CSV")
         if st.button("產生匯出檔"):
             df = export_all_df()
