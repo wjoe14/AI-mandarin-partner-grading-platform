@@ -409,7 +409,6 @@ try:
         def def_grade(key):
             v = review.get(key)
             return v if v in GRADE_OPTIONS else "未評"
-
         col_left, col_right = st.columns(2)
 
         # ======================
@@ -472,27 +471,6 @@ try:
                     key=f"before_value_grade_{article_id}_{reviewer_id}"
                 )
 
-                def _to_int_or_none(v):
-                    return None if v == "未評" else int(v)
-                
-                def _to_grade_or_none(v):
-                    return None if v == "未評" else v
-                
-                b_lang = _to_int_or_none(before_lang_score)
-                b_logic = _to_int_or_none(before_logic_score)
-                b_value = _to_int_or_none(before_value_score)
-                
-                a_lang = _to_int_or_none(after_lang_score)
-                a_logic = _to_int_or_none(after_logic_score)
-                a_value = _to_int_or_none(after_value_score)
-                
-                # 總分：如果三個都評了才顯示數字，否則顯示「未評」
-                before_total = (b_lang + b_logic + b_value) if (b_lang is not None and b_logic is not None and b_value is not None) else None
-                after_total  = (a_lang + a_logic + a_value) if (a_lang is not None and a_logic is not None and a_value is not None) else None
-                
-                st.metric("修改前文章_總分（自動加總）", before_total if before_total is not None else "未評")
-                st.metric("修改後文章_總分（自動加總）", after_total if after_total is not None else "未評")
-
         # ======================
         # 右欄：修改後文章
         # ======================
@@ -553,8 +531,32 @@ try:
                     key=f"after_value_grade_{article_id}_{reviewer_id}"
                 )
 
-            after_total = after_lang_score + after_logic_score + after_value_score
-            st.metric("修改後文章_總分（自動加總）", after_total)
+        # ======================
+        # 轉換「未評」→ None（這裡一定要在左右欄 selectbox 之後）
+        # ======================
+        def _to_int_or_none(v):
+            return None if v == "未評" else int(v)
+
+        def _to_grade_or_none(v):
+            return None if v == "未評" else v
+
+        b_lang = _to_int_or_none(before_lang_score)
+        b_logic = _to_int_or_none(before_logic_score)
+        b_value = _to_int_or_none(before_value_score)
+
+        a_lang = _to_int_or_none(after_lang_score)
+        a_logic = _to_int_or_none(after_logic_score)
+        a_value = _to_int_or_none(after_value_score)
+
+        before_total = (b_lang + b_logic + b_value) if (b_lang is not None and b_logic is not None and b_value is not None) else None
+        after_total = (a_lang + a_logic + a_value) if (a_lang is not None and a_logic is not None and a_value is not None) else None
+
+        st.markdown("---")
+        t1, t2 = st.columns(2)
+        with t1:
+            st.metric("修改前文章_總分（自動加總）", before_total if before_total is not None else "未評")
+        with t2:
+            st.metric("修改後文章_總分（自動加總）", after_total if after_total is not None else "未評")
 
         # ======================
         # 留言 + payload
@@ -582,9 +584,8 @@ try:
             "comment": comment,
         }
 
-
         # ======================
-        # 檢查是否仍有「未評」
+        # 檢查是否仍有「未評」（未評不能提交）
         # ======================
         required_ok = all([
             b_lang is not None, b_logic is not None, b_value is not None,
@@ -599,10 +600,10 @@ try:
 
         if not required_ok:
             st.warning("還有評分或等第為「未評」，提交前請先完成所有欄位。")
+
         # ======================
         # 三個操作按鈕
         # ======================
-        # 文章 id 清單，用來做上一篇/下一篇
         article_ids = [a["id"] for a in all_articles]
         cur_idx = article_ids.index(article_id) if article_id in article_ids else 0
 
@@ -616,33 +617,29 @@ try:
 
         with c2:
             if st.button("提交並前往下一篇", key=f"btn_submit_next_{article_id}_{reviewer_id}"):
-        
                 if not required_ok:
                     st.error("尚未完成所有評分或等第，無法提交。")
                     st.stop()
-        
+
                 save_review(reviewer_id, article_id, payload, submitted=True)
-        
-                # 下一篇：若有就跳，沒有就留在最後一篇
+
                 if cur_idx < len(article_ids) - 1:
                     st.session_state["current_article_id"] = article_ids[cur_idx + 1]
-        
+
                 st.success("已提交。")
                 st.rerun()
 
         with c3:
             if st.button("提交並回到上一篇", key=f"btn_submit_prev_{article_id}_{reviewer_id}"):
-        
                 if not required_ok:
                     st.error("尚未完成所有評分或等第，無法提交。")
                     st.stop()
-        
+
                 save_review(reviewer_id, article_id, payload, submitted=True)
-        
-                # 上一篇：若有就跳，沒有就留在第一篇
+
                 if cur_idx > 0:
                     st.session_state["current_article_id"] = article_ids[cur_idx - 1]
-        
+
                 st.success("已提交。")
                 st.rerun()
 
