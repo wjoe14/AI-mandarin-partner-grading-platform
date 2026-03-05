@@ -384,11 +384,59 @@ try:
         st.write(f"已提交：**{done}** / 應提交：**{total}**")
         if total > 0:
             st.progress(done / total)
-
+        
+        # ===== 進度條下方：跳轉選單 =====
+        all_articles = sb_get(
+            "articles",
+            select="id,before_title,after_title",
+            params={"order": "id.asc"}
+        )
+        
+        if not all_articles:
+            st.warning("目前資料庫沒有任何文章。請先請維護者匯入文章。")
+            st.stop()
+        
+        def _display_title(a):
+            t = (a.get("before_title") or "").strip()
+            if not t:
+                t = (a.get("after_title") or "").strip()
+            return t if t else a["id"]
+        
+        # 如果老師切換姓名，要重置目前文章（避免沿用上一位老師的狀態）
+        if st.session_state.get("active_reviewer_id") != reviewer_id:
+            st.session_state["active_reviewer_id"] = reviewer_id
+            # 預設跳到「下一篇未提交」，如果沒有就跳第一篇
+            nxt = get_next_article(reviewer_id)
+            st.session_state["current_article_id"] = nxt["id"] if nxt else all_articles[0]["id"]
+        
+        # 跳轉選單：用文章標題顯示
+        selected_article = st.selectbox(
+            "跳轉至指定文章",
+            options=all_articles,
+            format_func=_display_title,
+            index=next(
+                (i for i, a in enumerate(all_articles) if a["id"] == st.session_state.get("current_article_id")),
+                0
+            ),
+            key="jump_to_article"
+        )
+        
+        # 把目前文章 id 記下來（給按鈕用）
+        st.session_state["current_article_id"] = selected_article["id"]
+        
         st.markdown("---")
 
+
         # 用跳轉選單決定目前文章
-        article_id = st.session_state.get("current_article_id")
+        article_id = st.session_state["current_article_id"]
+        
+        art_rows = sb_get("articles", select="*", params={"id": f"eq.{article_id}", "limit": 1})
+        if not art_rows:
+            st.error("找不到指定文章，可能已被刪除或尚未匯入。")
+            st.stop()
+        
+        article = art_rows[0]
+        review = get_review(reviewer_id, article_id) or {}
         
         if not article_id:
             st.success("目前沒有文章可評分。")
