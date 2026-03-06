@@ -379,7 +379,7 @@ try:
             st.session_state["current_article_id"] = nxt["id"] if nxt else all_articles[0]["id"]
 
         selected_article = st.selectbox(
-            "跳轉至指定文章",
+            "目前文章（下拉選單可跳轉至指定文章）",
             options=all_articles,
             format_func=_display_title,
             index=next(
