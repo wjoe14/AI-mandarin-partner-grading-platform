@@ -356,7 +356,7 @@ try:
         # ===== 進度條下方：跳轉選單（老師端專用）=====
         all_articles = sb_get(
             "articles",
-            select="id,before_title,after_title",
+            select="id,before_title,after_title,tbcl_level,article_type,extra_info",
             params={"order": "id.asc"}
         )
 
@@ -365,10 +365,12 @@ try:
             st.stop()
 
         def _display_title(a):
-            t = (a.get("before_title") or "").strip()
-            if not t:
-                t = (a.get("after_title") or "").strip()
-            return t if t else a["id"]
+            title = (a.get("before_title") or "").strip()
+            if not title:
+                title = (a.get("after_title") or "").strip()
+            if not title:
+                title = "none"
+            return f"{a['id']}｜{title}"
 
         # 如果老師切換姓名，要重置目前文章（避免沿用上一位老師的狀態）
         if st.session_state.get("active_reviewer_id") != reviewer_id:
@@ -386,8 +388,17 @@ try:
             ),
             key="jump_to_article_teacher"
         )
-
+        
         st.session_state["current_article_id"] = selected_article["id"]
+        
+        tbcl_text = (selected_article.get("tbcl_level") or "").strip() or "none"
+        type_text = (selected_article.get("article_type") or "").strip() or "none"
+        extra_text = (selected_article.get("extra_info") or "").strip() or "none"
+        
+        st.markdown(f"**TBCL等級：** {tbcl_text}")
+        st.markdown(f"**文章類型：** {type_text}")
+        st.markdown(f"**額外資訊：** {extra_text}")
+        
         st.markdown("---")
 
         # 用跳轉選單決定目前文章
