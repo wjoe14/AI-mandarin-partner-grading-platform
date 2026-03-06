@@ -610,9 +610,9 @@ try:
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            if st.button("儲存（不提交）", key=f"btn_save_{article_id}_{reviewer_id}"):
+            if st.button("暫存（不提交）", key=f"btn_save_{article_id}_{reviewer_id}"):
                 save_review(reviewer_id, article_id, payload, submitted=False)
-                st.success("已儲存（未提交）。")
+                st.success("已暫存（未提交）。")
                 st.rerun()
 
         with c2:
