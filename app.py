@@ -378,15 +378,18 @@ try:
             nxt = get_next_article(reviewer_id)
             st.session_state["current_article_id"] = nxt["id"] if nxt else all_articles[0]["id"]
 
+        st.markdown("### 目前文章（下拉選單可跳轉至指定文章）")
+        
         selected_article = st.selectbox(
-            "目前文章（下拉選單可跳轉至指定文章）",
+            "",
             options=all_articles,
             format_func=_display_title,
             index=next(
                 (i for i, a in enumerate(all_articles) if a["id"] == st.session_state.get("current_article_id")),
                 0
             ),
-            key="jump_to_article_teacher"
+            key="jump_to_article_teacher",
+            label_visibility="collapsed"
         )
         
         st.session_state["current_article_id"] = selected_article["id"]
