@@ -61,6 +61,7 @@ with col2:
 # ===== Secrets =====
 SUPABASE_URL = st.secrets.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_ANON_KEY = st.secrets.get("SUPABASE_ANON_KEY", "")
+ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", "")
 
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
     st.error("缺少 Secrets：SUPABASE_URL 或 SUPABASE_ANON_KEY。請到 Streamlit → Settings → Secrets 設定。")
@@ -284,6 +285,21 @@ try:
     mode = st.sidebar.radio("模式", ["評分老師端", "維護者後台端"])
 
     if mode == "維護者後台端":
+        if not ADMIN_PASSWORD:
+            st.error("缺少 Secrets：ADMIN_PASSWORD。請到 Streamlit → Settings → Secrets 設定。")
+            st.stop()
+
+        if not st.session_state.get("admin_authenticated"):
+            st.subheader("維護者後台端登入")
+            admin_pwd_input = st.text_input("請輸入密碼", type="password", key="admin_pwd_input")
+            if st.button("登入", key="admin_login_btn"):
+                if admin_pwd_input == ADMIN_PASSWORD:
+                    st.session_state["admin_authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("密碼錯誤，請再試一次。")
+            st.stop()
+
         st.subheader("維護者後台端")
 
         st.markdown("### 1) 一鍵匯入文章（txt 或 zip）")
