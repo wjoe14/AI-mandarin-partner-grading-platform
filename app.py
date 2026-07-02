@@ -180,11 +180,31 @@ def read_uploaded_as_txt_or_zip(uploaded_file):
     return [(name, data)]
 
 # ===== Domain logic =====
+# 讀取類函式都加上快取，避免每次選單互動都重新打 Supabase API；
+# 會寫入資料的函式（import_txt / save_review）結束後會清掉對應快取，確保讀到最新資料。
+@st.cache_data(ttl=300)
 def get_reviewers(active_only=True):
     params = {"order": "name.asc"}
     if active_only:
         params["is_active"] = "eq.true"
     return sb_get("reviewers", select="reviewer_id,name,is_active", params=params)
+
+@st.cache_data(ttl=60)
+def get_article_count():
+    return len(sb_get("articles", select="id"))
+
+@st.cache_data(ttl=60)
+def get_all_articles():
+    return sb_get(
+        "articles",
+        select="id,before_title,after_title,tbcl_level,article_type,extra_info",
+        params={"order": "id.asc"}
+    )
+
+@st.cache_data(ttl=300)
+def get_article(article_id: str):
+    rows = sb_get("articles", select="*", params={"id": f"eq.{article_id}", "limit": 1})
+    return rows[0] if rows else None
 
 def init_reviews_for_article(article_id: str, reviewer_ids):
     rows = [{"article_id": article_id, "reviewer_id": rid, "status": "not_started"} for rid in reviewer_ids]
@@ -217,13 +237,22 @@ def import_txt(files):
         ok += 1
         if not fields["tbcl_level"] or not fields["article_type"]:
             errors.append((fname, "缺少 TBCL等級 或 文章類型（仍已入庫）"))
+
+    get_article_count.clear()
+    get_all_articles.clear()
+    get_article.clear()
+    get_progress.clear()
+    get_next_article.clear()
+    get_review.clear()
     return ok, errors
 
+@st.cache_data(ttl=15)
 def get_progress(reviewer_id: int):
-    total = len(sb_get("articles", select="id"))
+    total = get_article_count()
     done = len(sb_get("reviews", select="review_id", params={"reviewer_id": f"eq.{reviewer_id}", "status": "eq.submitted"}))
     return done, total
 
+@st.cache_data(ttl=15)
 def get_next_article(reviewer_id: int):
     rows = sb_get(
         "reviews",
@@ -233,9 +262,9 @@ def get_next_article(reviewer_id: int):
     if not rows:
         return None
     aid = rows[0]["article_id"]
-    art = sb_get("articles", select="*", params={"id": f"eq.{aid}", "limit": 1})
-    return art[0] if art else None
+    return get_article(aid)
 
+@st.cache_data(ttl=15)
 def get_review(reviewer_id: int, article_id: str):
     rows = sb_get("reviews", select="*", params={"reviewer_id": f"eq.{reviewer_id}", "article_id": f"eq.{article_id}", "limit": 1})
     return rows[0] if rows else None
@@ -246,6 +275,9 @@ def save_review(reviewer_id: int, article_id: str, payload: dict, submitted: boo
         "status": "submitted" if submitted else "in_progress",
     }
     sb_patch("reviews", {"reviewer_id": f"eq.{reviewer_id}", "article_id": f"eq.{article_id}"}, patch)
+    get_review.clear()
+    get_progress.clear()
+    get_next_article.clear()
 
 def export_all_df():
     articles = sb_get("articles", select="*")
@@ -322,7 +354,7 @@ try:
         if not reviewers:
             st.error("reviewers 表沒有任何 active 老師，請先新增 5 位老師姓名（is_active=true）。")
         else:
-            total_articles = len(sb_get("articles", select="id"))
+            total_articles = get_article_count()
             st.write(f"文章總數：**{total_articles}**")
             st.write(f"預期評分總數（文章×老師）：**{total_articles * len(reviewers)}**")
 
@@ -360,11 +392,7 @@ try:
             st.progress(done / total)
 
         # ===== 進度條下方：跳轉選單（老師端專用）=====
-        all_articles = sb_get(
-            "articles",
-            select="id,before_title,after_title,tbcl_level,article_type,extra_info",
-            params={"order": "id.asc"}
-        )
+        all_articles = get_all_articles()
 
         if not all_articles:
             st.warning("目前資料庫沒有任何文章。請先請維護者匯入文章。")
@@ -413,12 +441,11 @@ try:
         # 用跳轉選單決定目前文章
         article_id = st.session_state["current_article_id"]
 
-        art_rows = sb_get("articles", select="*", params={"id": f"eq.{article_id}", "limit": 1})
-        if not art_rows:
+        article = get_article(article_id)
+        if not article:
             st.error("找不到指定文章，可能已被刪除或尚未匯入。")
             st.stop()
 
-        article = art_rows[0]
         review = get_review(reviewer_id, article_id) or {}
 
         def def_total(key):
